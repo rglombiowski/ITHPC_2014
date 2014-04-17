@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <time.h>
+#include <unistd.h>
+#include <string.h>
 
 #define MILIARD 1000000000.0
 
@@ -134,15 +136,30 @@ int area_check(int row, int col, int max_row, int max_col, int** array){
   return amount;
 }
 
-int main(){
+int main(int argc, char *argv[]){
+
+  // Sprawdzenie poprawności uruchomienia
+  // Wymagane dane: wielkość macierzy, ilość kroków, plik danych, info o rysowaniu, info o zapisywaniu do pliku
+  if(argc != 6){
+    printf("BLAD: ZA MALO DANYCH\n");
+    printf("Konstrukcja: program wielkosc_macierzy ilosc_krokow plik_danych(sama nazwa) animacja(0-nie, 1-tak) zapisywanie_do_pliku(0-nie, 1-tak)\n");
+    exit(1);
+  }
 
   // Zmienne
   int i,j;
-  int counter, a_steps = 50, last_used = 1, area_amount = 0;
-  int N = 20; //Liczba wierszy
-  int M = 20; //Liczba kolumn
+  int counter, last_used = 1, area_amount = 0;
+  int N = atoi(argv[1]); //Liczba wierszy
+  int M = atoi(argv[1]); //Liczba kolumn
+  int a_steps = atoi(argv[2]); // Ilość kroków
+  int i_draw = atoi(argv[4]); // Czy rysować
+  int i_write = atoi(argv[5]); // Czy zapisywać wyniki do pliku
   int **arr1;
   int **arr2;
+
+  // Zmienne plikowe
+  char cwd[100]; //Aktualnie działający katalog
+  char file_name[150]; // Pełna ścieżka do pliku
 
   FILE *data;
   FILE *result;
@@ -151,6 +168,18 @@ int main(){
   //zmienne czasowe
   struct timespec start, stop;
   double time, sum = 0;
+
+  // Konstruowanie ścieżki do pliku
+  if(getcwd(cwd, sizeof(cwd)) != NULL){ // getcwd pobiera info o aktualnie działającym katalogu
+    strcpy(file_name,cwd);
+  }else{
+    printf("BLAD: BLAD PRZY POBIERANIU INFORMACJI O AKTUALNYM KATALOGU\n");
+    exit(1);
+  }
+  strcat(file_name, "/");
+  strcat(file_name, argv[3]);
+  // Sprawdzenie poprawności ścieżki
+//  printf("Sciezka: %s\n", file_name);
 
   clock_gettime( CLOCK_REALTIME, &start);
 
@@ -163,7 +192,7 @@ int main(){
   array_zero(N, M, &arr2);
 
   // Wczytywanie pozycji startowych
-  if((data = fopen("data.txt", "r")) == NULL){
+  if((data = fopen(file_name, "r")) == NULL){
     printf("BLAD OTWIERANA PLIKU: DATA\n");
     exit(1);
   }
@@ -201,14 +230,17 @@ int main(){
         }
       }
       last_used = 2;
-/*      // Tmp: Rysowanie
-      system("clear");
-      for(i=0; i<N; i++){
-        for(j=0; j<M; j++){
-          printf("%d", arr2[i][j]);
+      // Rysowanie
+      if(i_draw == 1){
+        system("clear");
+        for(i=0; i<N; i++){
+          for(j=0; j<M; j++){
+            printf("%d", arr2[i][j]);
+          }
+          printf("\n");
         }
-        printf("\n");
-      }*/
+        sleep(1);
+      }
     }else{
       for(i=0; i<N; i++){
         for(j=0; j<M; j++){
@@ -225,14 +257,17 @@ int main(){
         }
       }
       last_used = 1;
-/*      // Tmp: Rysowanie
-      system("clear");
-      for(i=0; i<N; i++){
-        for(j=0; j<M; j++){
-          printf("%d", arr2[i][j]);
+      // Rysowanie
+      if(i_draw == 1){
+        system("clear");
+        for(i=0; i<N; i++){
+          for(j=0; j<M; j++){
+            printf("%d", arr1[i][j]);
+          }
+          printf("\n");
         }
-        printf("\n");
-      }*/
+        sleep(1);
+      }
     }
   }
 
@@ -241,40 +276,42 @@ int main(){
   printf("Czas (mechanika): %lf\n", time);
   sum += time;
 
-  clock_gettime( CLOCK_REALTIME, &start);
+  // Wypisywanie wyniku do pliku
+  if(i_write == 1){
+    clock_gettime( CLOCK_REALTIME, &start);
 
-  // Tmp: Wywalanie wyniku do pliku
-  if((result = fopen("result.txt", "w")) == NULL){
-    printf("BLAD OTWIERANA PLIKU: RESULT\n");
-    exit(1);
-  }
-
-  if(last_used == 1){
-    for(i=0; i<N; i++){
-      for(j=0; j<M; j++){
-        fprintf(result, "%d", arr1[i][j]);
-      }
-      fprintf(result, "\n");
+    if((result = fopen("result.txt", "w")) == NULL){
+      printf("BLAD OTWIERANA PLIKU: RESULT\n");
+      exit(1);
     }
-  }else{
-    for(i=0; i<N; i++){
-      for(j=0; j<M; j++){
-        fprintf(result, "%d", arr2[i][j]);
-      }
-      fprintf(result, "\n");
-    }
-  }
 
-  fclose(result);
+    if(last_used == 1){
+      for(i=0; i<N; i++){
+        for(j=0; j<M; j++){
+          fprintf(result, "%d", arr1[i][j]);
+        }
+        fprintf(result, "\n");
+      }
+    }else{
+      for(i=0; i<N; i++){
+        for(j=0; j<M; j++){
+          fprintf(result, "%d", arr2[i][j]);
+        }
+        fprintf(result, "\n");
+      }
+    }
+
+    fclose(result);
+
+    clock_gettime( CLOCK_REALTIME, &stop);
+    time = (( stop.tv_sec - start.tv_sec ) + ( stop.tv_nsec - start.tv_nsec )) / MILIARD;
+    printf("Czas (zapisywanie wyniku): %lf\n", time);
+    sum += time;
+  }
 
   //Czyszcenie pamięci
   clear(N, arr1);
   clear(N, arr2);
-
-  clock_gettime( CLOCK_REALTIME, &stop);
-  time = (( stop.tv_sec - start.tv_sec ) + ( stop.tv_nsec - start.tv_nsec )) / MILIARD;
-  printf("Czas (zapisywanie wyniku): %lf\n", time);
-  sum += time;
 
   printf("Czas (calosc): %lf\n", sum);
 
