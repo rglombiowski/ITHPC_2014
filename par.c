@@ -168,7 +168,7 @@ int main(int argc, char *argv[]){
   int data_row, data_col, a_cells;
 
   //zmienne czasowe
-  struct timespec start, stop;
+  struct timespec start1, stop1, start2, stop2, start3, stop3;
   double time, sum = 0;
 
   // Konstruowanie ścieżki do pliku
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]){
   // Sprawdzenie poprawności ścieżki
 //  printf("Sciezka: %s\n", file_name);
 
-  clock_gettime( CLOCK_REALTIME, &start);
+  clock_gettime( CLOCK_REALTIME, &start1);
 
   // Tworzenie tablic
   arr1 = allocation(N, M);
@@ -207,12 +207,13 @@ int main(int argc, char *argv[]){
 
   fclose(data);
 
-  clock_gettime( CLOCK_REALTIME, &stop);
-  time = (( stop.tv_sec - start.tv_sec ) + ( stop.tv_nsec - start.tv_nsec )) / MILIARD;
+  clock_gettime( CLOCK_REALTIME, &stop1);
+  time = (( stop1.tv_sec - start1.tv_sec ) + ( stop1.tv_nsec - start1.tv_nsec )) / MILIARD;
   printf("Czas (tworzenie danych): %lf\n", time);
   sum += time;
+  time = 0;
 
-  clock_gettime( CLOCK_REALTIME, &start);
+  clock_gettime( CLOCK_REALTIME, &start2);
 
   // Mechanika
   for(counter = 1; counter <= a_steps; counter++){
@@ -275,14 +276,15 @@ int main(int argc, char *argv[]){
     }
   }
 
-  clock_gettime( CLOCK_REALTIME, &stop);
-  time = (( stop.tv_sec - start.tv_sec ) + ( stop.tv_nsec - start.tv_nsec )) / MILIARD;
+  clock_gettime( CLOCK_REALTIME, &stop2);
+  time = (( stop2.tv_sec - start2.tv_sec ) + ( stop2.tv_nsec - start2.tv_nsec )) / MILIARD;
   printf("Czas (mechanika): %lf\n", time);
   sum += time;
+  time = 0;
 
   // Wypisywanie wyniku do pliku
   if(i_write == 1){
-    clock_gettime( CLOCK_REALTIME, &start);
+    clock_gettime( CLOCK_REALTIME, &start3);
 
     if((result = fopen("result.txt", "w")) == NULL){
       printf("BLAD OTWIERANA PLIKU: RESULT\n");
@@ -307,8 +309,8 @@ int main(int argc, char *argv[]){
 
     fclose(result);
 
-    clock_gettime( CLOCK_REALTIME, &stop);
-    time = (( stop.tv_sec - start.tv_sec ) + ( stop.tv_nsec - start.tv_nsec )) / MILIARD;
+    clock_gettime( CLOCK_REALTIME, &stop3);
+    time = (( stop3.tv_sec - start3.tv_sec ) + ( stop3.tv_nsec - start3.tv_nsec )) / MILIARD;
     printf("Czas (zapisywanie wyniku): %lf\n", time);
     sum += time;
   }
