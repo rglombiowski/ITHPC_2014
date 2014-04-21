@@ -146,9 +146,9 @@ int main(int argc, char *argv[]){
 
   // Sprawdzenie poprawności uruchomienia
   // Wymagane dane: wielkość macierzy, ilość kroków, plik danych, info o rysowaniu, info o zapisywaniu do pliku
-  if(argc != 6){
+  if(argc != 7){
     printf("BLAD: ZA MALO DANYCH\n");
-    printf("Konstrukcja: program wielkosc_macierzy ilosc_krokow plik_danych(sama nazwa) animacja(0-nie, 1-tak) zapisywanie_do_pliku(0-nie, 1-tak)\n");
+    printf("Konstrukcja: program wielkosc_macierzy ilosc_krokow plik_danych(sama nazwa) animacja(0-nie, 1-tak) wyniki_do_pliku(0-nie, 1-tak) czas_do_pliku(0-nie, 1-tak)\n");
     exit(1);
   }
 
@@ -160,6 +160,7 @@ int main(int argc, char *argv[]){
   int a_steps = atoi(argv[2]); // Ilość kroków
   int i_draw = atoi(argv[4]); // Czy rysować
   int i_write = atoi(argv[5]); // Czy zapisywać wyniki do pliku
+  int i_time = atoi(argv[6]); // Czy zapisywać czas do pliku
   int **arr1;
   int **arr2;
 
@@ -169,11 +170,12 @@ int main(int argc, char *argv[]){
 
   FILE *data;
   FILE *result;
+  FILE *result_time;
   int data_row, data_col, a_cells;
 
   //zmienne czasowe
   struct timespec start1, stop1, start2, stop2, start3, stop3;
-  double time, sum = 0;
+  double time1, time2, time3, sum = 0;
 
   // Konstruowanie ścieżki do pliku
   if(getcwd(cwd, sizeof(cwd)) != NULL){ // getcwd pobiera info o aktualnie działającym katalogu
@@ -216,11 +218,10 @@ int main(int argc, char *argv[]){
   clock_gettime(CLOCK_MONOTONIC, &stop1);
 
 //  time = (( stop1.tv_sec - start1.tv_sec ) + ( stop1.tv_nsec - start1.tv_nsec )) / MILIARD;
-  time = timeDiff(&stop1, &start1);
+  time1 = timeDiff(&stop1, &start1);
 
-  printf("Czas (tworzenie danych): %lf\n", time);
-  sum += time;
-  time = 0;
+  printf("Czas (tworzenie danych): %lf\n", time1);
+  sum += time1;
 
 //  clock_gettime( CLOCK_REALTIME, &start2);
   clock_gettime(CLOCK_MONOTONIC, &start2);
@@ -288,11 +289,10 @@ int main(int argc, char *argv[]){
   clock_gettime(CLOCK_MONOTONIC, &stop2);
 
 //  time = (( stop2.tv_sec - start2.tv_sec ) + ( stop2.tv_nsec - start2.tv_nsec )) / MILIARD;
-  time = timeDiff(&stop2, &start2);
+  time2 = timeDiff(&stop2, &start2);
 
-  printf("Czas (mechanika): %lf\n", time);
-  sum += time;
-  time = 0;
+  printf("Czas (mechanika): %lf\n", time2);
+  sum += time2;
 
   // Wypisywanie wyniku do pliku
   if(i_write == 1){
@@ -326,10 +326,10 @@ int main(int argc, char *argv[]){
     clock_gettime(CLOCK_MONOTONIC, &stop3);
 
 //    time = (( stop3.tv_sec - start3.tv_sec ) + ( stop3.tv_nsec - start3.tv_nsec )) / MILIARD;
-    time = timeDiff(&stop3, &start3);
+    time3 = timeDiff(&stop3, &start3);
 
-    printf("Czas (zapisywanie wyniku): %lf\n", time);
-    sum += time;
+    printf("Czas (zapisywanie wyniku): %lf\n", time3);
+    sum += time3;
   }
 
   //Czyszcenie pamięci
@@ -337,6 +337,27 @@ int main(int argc, char *argv[]){
   clear(N, arr2);
 
   printf("Czas (calosc): %lf\n", sum);
+
+  // Wypisywanie czasu do pliku
+  if(i_time == 1){
+
+    if((result_time = fopen("time.txt", "a")) == NULL){
+      printf("BLAD OTWIERANA PLIKU: TIME\n");
+      exit(1);
+    }
+
+    fprintf(result_time, "Macierz: %d x %d\n", N, M);
+    fprintf(result_time, "Ilość krokow: %d\n", a_steps);
+    fprintf(result_time, "\tCzas (tworzenie danych): %lf\n", time1);
+    fprintf(result_time, "\tCzas (mechanika): %lf\n", time2);
+    if(i_write == 1){
+      fprintf(result_time, "\tCzas (zapisywanie wyniku): %lf\n", time3);
+    }
+    fprintf(result_time, "\tCzas (calosc): %lf\n", sum);
+    fprintf(result_time, "\n");
+
+    fclose(result_time);
+  }
 
   return 0;
 }
